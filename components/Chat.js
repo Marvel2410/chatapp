@@ -1,37 +1,44 @@
 //Chat.js
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, KeyboardAvoidingView, Platform } from 'react-native';
 import { GiftedChat, Bubble } from "react-native-gifted-chat";
+import { collection, addDoc, onSnapshot, } from "firebase/firestore";
 
 
-const Chat = ({ route, navigation }) => {
+
+const Chat = ({ route, navigation, db }) => {
   const { name, selectedColor } = route.params;
   const [messages, setMessages] = useState([]);
+
   const onSend = (newMessages) => {
-    setMessages(previousMessages => GiftedChat.append(previousMessages, newMessages))
-  }
+    addDoc(collection(db, "messages"), newMessages[0]);
+  };
+
 
   useEffect(() => {
-    setMessages([
-      {
-        _id: 1,
-        text: "Hello developer",
-        createdAt: new Date(),
-        user: {
-          _id: 2,
-          name: "React Native",
-          avatar: "https://placeimg.com/140/140/any",
-        },
-      },
-      {
-        _id: 2,
-        text: 'This is a system message',
-        createdAt: new Date(),
-        system: true,
-      },
-    ]);
-  }, []);
+    const unsubscribe = onSnapshot(collection(db, 'messages'), (snapshot) => {
+      const newMessages = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          _id: doc.id,
+          text: data.text,
+          createdAt: data.createdAt.toDate(),
+          user: {
+            _id: data.user._id,
+            name: data.user.name,
+            avatar: data.user.avatar,
+          },
+        };
+      });
+      setMessages(newMessages);
+    });
+
+    // Add cleanup 
+    return () => {
+      unsubscribe();
+    };
+  }, [db]);
 
 
   useEffect(() => {
@@ -41,7 +48,7 @@ const Chat = ({ route, navigation }) => {
         backgroundColor: selectedColor,
       },
     });
-  }, []);
+  }, [name, selectedColor]);
 
 
   return (
@@ -54,9 +61,10 @@ const Chat = ({ route, navigation }) => {
         <GiftedChat
           messages={messages}
           renderBubble={renderBubble}
-          onSend={messages => onSend(messages)}
+          onSend={(newMessages) => onSend(newMessages)}
           user={{
-            _id: 1
+            _id: route.params.userId, // Extracting user ID from route.params
+            name: route.params.name, // Using the name from route.params
           }}
           timeTextStyle={{
             left: {
@@ -90,6 +98,7 @@ const renderBubble = (props) => {
     }}
   />
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

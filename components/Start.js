@@ -1,30 +1,38 @@
 //Start.js
 
+import React from 'react';
 import { useState } from 'react';
 import { ImageBackground, StyleSheet, View, Text, TouchableOpacity, Button, TextInput } from 'react-native';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const Start = ({ navigation }) => {
+  // Log in the user anonymously
+  const auth = getAuth();
   const [name, setName] = useState('');
-  const image = require('../img/backgroundimage.png');
   const [selectedColor, setSelectedColor] = useState('#090C08');
-
-  const handleStartChat = () => {
-    navigation.navigate('Chat', { name, selectedColor });
-  }
+  const image = require('../img/backgroundimage.png');
 
   const handleColorChange = (color) => {
     setSelectedColor(color);
   };
 
-  const colorOptions = ['#2f4f4f', '#db7093', '#98fb98', '#b0c4de'];
+  const handleStartChat = () => {
+    signInAnonymously(auth)
+      .then((result) => {
+        navigation.navigate('Chat', { selectedColor, userId: result.user.uid, name });
+      })
+      .catch((error) => {
+        console.error('Error signing in anonymously:', error);
+      });
+  };
 
+  const colorOptions = ['#2f4f4f', '#db7093', '#98fb98', '#b0c4de'];
 
   return (
     <ImageBackground source={image} resizeMode="cover" style={styles.container}>
       <Text style={styles.title}>Chat It Up!</Text>
 
       <View style={styles.inputContainer}>
-
         <TextInput
           style={styles.textInput}
           value={name}
