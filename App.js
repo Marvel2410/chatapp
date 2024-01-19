@@ -3,6 +3,7 @@ import Start from './components/Start';
 import Chat from './components/Chat';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
